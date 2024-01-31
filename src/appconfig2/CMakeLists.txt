@@ -7,7 +7,7 @@ include_directories(../include)
 #set ( PROJECT_LINK_LIBS libtestStudent.so )
 file(GLOB PROJECT_LINK_LIBS "./*.so")
 link_directories(/content/VMLearner/build)
-
+set(LIBRARY_OUTPUT_DIRECTORY ../build)
 #However, the file(GLOB...) allows for wildcard additions:
 #file(GLOB SOURCES "src/Student.cpp")
 file(GLOB SOURCES "./*.cpp")
