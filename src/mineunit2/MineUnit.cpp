@@ -79,7 +79,6 @@ int MineUnit::runMineLoop()
 
 }
 
-
 static const std::string base64_chars =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 "abcdefghijklmnopqrstuvwxyz"

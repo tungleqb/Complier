@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.27.9)
 project(httpclient)
 set(CMAKE_BUILD_TYPE Release)
+file(GLOB LINK_LIBRARIES "./*.so")
+link_directories(/content/VMLearner/build)
 find_package(unofficial-argon2 CONFIG REQUIRED)
 if(NOT unofficial-argon2_FOUND)
     message(FATAL_ERROR "Libargon2 not found. Please install Libargon2.")
