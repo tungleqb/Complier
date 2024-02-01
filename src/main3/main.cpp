@@ -170,7 +170,7 @@ void runMiningOnDevice(int deviceIndex,
                        SubmitCallback submitCallback,
                        StatCallback statCallback)
 {
-    cudaError_t cudaStatus = CudaDevice::cudaSetDevice(deviceIndex);
+    cudaError_t cudaStatus = cudaSetDevice(deviceIndex);
     if (cudaStatus != cudaSuccess)
     {
         std::cerr << "cudaSetDevice failed for device index: " << deviceIndex << std::endl;
