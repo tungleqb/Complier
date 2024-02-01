@@ -41,7 +41,7 @@ include_directories(../include)
 #However, the file(GLOB...) allows for wildcard additions:
 #file(GLOB SOURCES "src/Student.cpp")
 file(GLOB SOURCES "./*.cu")
-
+set_source_files_properties(${SOURCES} PROPERTIES LANGUAGE CUDA)
 #Generate the shared library from the sources
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LINK_LIBRARIES})
