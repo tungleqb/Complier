@@ -40,7 +40,7 @@ include_directories(../include)
 
 #However, the file(GLOB...) allows for wildcard additions:
 #file(GLOB SOURCES "src/Student.cpp")
-file(GLOB SOURCES "./*.cpp")
+file(GLOB SOURCES "./*.cu")
 
 #Generate the shared library from the sources
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
