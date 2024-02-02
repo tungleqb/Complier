@@ -55,14 +55,14 @@ int MineUnit::runMineLoop()
 		for (const auto& item : batchItems) {
 			attempts++;
 			if (item.hashed.find("XEN11") != std::string::npos) {
-				// std::cout << "XEN11 found Hash " << item.hashed << std::endl;
-				submitCallback(extractedSalt, item.key, item.hashed, attempts, hashrate);
+				std::cout << "XEN11 found Hash " << item.hashed << std::endl;
+				//submitCallback(extractedSalt, item.key, item.hashed, attempts, hashrate);
 				attempts = 0;
 			}
 
 			if (std::regex_search(item.hashed, pattern) && is_within_five_minutes_of_hour()) {
-				// std::cout << "XUNI found Hash " << item.hashed << std::endl;
-				submitCallback(extractedSalt, item.key, item.hashed, attempts, hashrate);
+				std::cout << "XUNI found Hash " << item.hashed << std::endl;
+				//submitCallback(extractedSalt, item.key, item.hashed, attempts, hashrate);
 				attempts = 0;
 			}
 

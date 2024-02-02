@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.27.9)
-project(kernelrunner)
+project(kernelrunner LANGUAGES CUDA CXX VERSION 1.0)
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CUDA_ARCHITECTURES 75)
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}) 
@@ -57,4 +57,3 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 #Set the location for library installation -- i.e., /usr/lib in this case
 # not really necessary in this example. Use "sudo make install" to apply
 install(TARGETS ${PROJECT_NAME} DESTINATION /usr/lib)
-
