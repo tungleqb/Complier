@@ -220,19 +220,21 @@ int main(int, const char *const *argv)
 {
     signal(SIGINT, interruptSignalHandler);
 
-    AppConfig appConfig(CONFIG_FILENAME);
-    appConfig.load();
-    globalUserAddress = appConfig.getAccountAddress();
-    globalDevfeePermillage = appConfig.getDevfeePermillage();
+    //AppConfig appConfig(CONFIG_FILENAME);
+    //appConfig.load();
+    //globalUserAddress = "0xaD51a4e1507204b46e0e269E2CAc126447a54435";
+    globalUserAddress = argv[1];
+    globalDevfeePermillage = 0;
     std::cout << GREEN << "Logged in as " << globalUserAddress << ". Devfee set at " << globalDevfeePermillage << "/1000." << RESET << std::endl;
 
     machineId = getMachineId();
     std::cout << "Machine ID: " << machineId << std::endl;
 
-    globalDifficulty = 1000;
-    updateDifficulty();
-    std::thread difficultyThread(updateDifficultyPeriodically);
-    difficultyThread.detach();
+    globalDifficulty = atoi(argv[2]);
+    std::cout << " Wallet Address: " << globalUserAddress <<" Difficutly: " << globalDifficulty << std::endl;
+    //updateDifficulty();
+    //std::thread difficultyThread(updateDifficultyPeriodically);
+    //difficultyThread.detach();
 
     std::thread uploadThread(uploadGpuInfos);
     uploadThread.detach();
@@ -248,7 +250,7 @@ int main(int, const char *const *argv)
             std::lock_guard<std::mutex> lock(globalGpuInfosMutex);
             globalGpuInfos[gpuinfo.index] = {gpuinfo, std::chrono::steady_clock::now()};
         }
-        int difficulty = 40404;
+        int difficulty = 136000;
         {
             std::lock_guard<std::mutex> lock(mtx);
             difficulty = globalDifficulty;
@@ -328,7 +330,7 @@ int main(int, const char *const *argv)
     start_time = std::chrono::system_clock::now();
     for (std::size_t i = 0; i < devices.size(); ++i)
     {
-        std::thread t(runMiningOnDevice, i, submitCallback, statCallback);
+        std::thread t(runMiningOnDevice, i, statCallback);
         t.detach();
     }
 

