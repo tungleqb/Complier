@@ -1,5 +1,6 @@
 #include "PowSubmitter.h"
 #include "HttpClient.h"
+#include "Logger.h"
 #include "MerkleTree.h"
 #include "Argon2idHasher.h"
 #include "SHA256Hasher.h"

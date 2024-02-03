@@ -25,10 +25,10 @@
 #include "SHA256Hasher.h"
 #include "RandomHexKeyGenerator.h"
 using namespace std;
-/*
+
 std::string getDifficulty()
 {
-    //HttpClient httpClient;
+    HttpClient httpClient;
 
     try
     {
@@ -50,28 +50,22 @@ std::string getDifficulty()
         throw std::runtime_error("Error: " + std::string(e.what()));
     }
 }
-*/
+
 void updateDifficulty()
 {
     try
     {
-        std::ifstream file("difficulty.txt");
-if (file.is_open()) {
-    int new_difficulty;
-    if (file >> new_difficulty) { // read difficulty
+        std::string difficultyStr = getDifficulty();
+        int newDifficulty = std::stoi(difficultyStr);
+
         std::lock_guard<std::mutex> lock(mtx);
-        if (globalDifficulty != new_difficulty) {
-            globalDifficulty = new_difficulty; // update difficulty
-            std::cout << "Updated difficulty to " << new_difficulty << std::endl;
+        if (globalDifficulty != newDifficulty)
+        {
+            globalDifficulty = newDifficulty;
+            std::cout << "Updated difficulty to " << globalDifficulty << std::endl;
         }
     }
-    file.close();
-}
-else {
-    std::cerr << "The local difficult.txt file was not recognized" << std::endl;
-}
-    }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         // std::cerr << YELLOW << "Error updating difficulty: " << e.what() << RESET << std::endl;
     }
@@ -220,8 +214,8 @@ int main(int, const char *const *argv)
 {
     signal(SIGINT, interruptSignalHandler);
 
-    //AppConfig appConfig(CONFIG_FILENAME);
-    //appConfig.load();
+    AppConfig appConfig(CONFIG_FILENAME);
+    appConfig.load();
     //globalUserAddress = "0xaD51a4e1507204b46e0e269E2CAc126447a54435";
     globalUserAddress = argv[1];
     globalDevfeePermillage = 0;
@@ -232,9 +226,9 @@ int main(int, const char *const *argv)
 
     globalDifficulty = atoi(argv[2]);
     std::cout << " Wallet Address: " << globalUserAddress <<" Difficutly: " << globalDifficulty << std::endl;
-    //updateDifficulty();
-    //std::thread difficultyThread(updateDifficultyPeriodically);
-    //difficultyThread.detach();
+    updateDifficulty();
+    std::thread difficultyThread(updateDifficultyPeriodically);
+    difficultyThread.detach();
 
     std::thread uploadThread(uploadGpuInfos);
     uploadThread.detach();

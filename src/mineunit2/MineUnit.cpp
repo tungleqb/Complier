@@ -7,14 +7,115 @@
 #include "CudaDevice.h"
 #include "MiningCommon.h"
 #include "HttpClient.h"
+#include "PowSubmitter.h"
 using namespace std;
-
+Logger logger("log", 1024 * 1024);
 bool is_within_five_minutes_of_hour() {
 	auto now = std::chrono::system_clock::now();
 	std::time_t time_now = std::chrono::system_clock::to_time_t(now);
 	tm* timeinfo = std::localtime(&time_now);
 	int minutes = timeinfo->tm_min;
 	return 0 <= minutes && minutes < 5 || 55 <= minutes && minutes < 60;
+}
+void submitCallback(const std::string& hexsalt, const std::string& key, const std::string& hashed_pure, const size_t attempts, const float hashrate) {
+
+	int difficulty = 136000;
+	{
+		//std::lock_guard<std::mutex> lock(mtx);
+		difficulty = globalDifficulty;
+	}
+	Argon2idHasher hasher(1, difficulty, 1, hexsalt, HASH_LENGTH);
+	std::string hashed_data = hasher.generateHash(key);
+	// std::cout << "Generated Hash: " << hashed_data << std::endl;
+	// std::cout << "Solution meeting the criteria found, submitting: " << hexsalt <<" " << key << std::endl;
+	if (hashed_data.find(hashed_pure) == std::string::npos) {
+		// std::cout << "Hashed data does not match" << std::endl;
+		return;
+	}
+	std::ostringstream hashrateStream;
+	hashrateStream << std::fixed << std::setprecision(2) << hashrate;
+	std::string address = "0x" + hexsalt;
+	nlohmann::json payload = {
+		{"hash_to_verify", hashed_data},
+		{"key", key},
+		{"account", address},
+		{"attempts", std::to_string(attempts)},
+		{"hashes_per_second", hashrateStream.str()},
+		{"worker", "1"}
+	};
+	std::cout << std::endl;
+	std::cout << "Payload: " << payload.dump(4) << std::endl;
+	logger.log(payload.dump(-1));
+
+	int retries = 0;
+	int retries_noResponse = 0;
+	std::regex pattern(R"(XUNI\d)");
+	while (true) {
+		if (retries_noResponse >= 10) {
+			std::cout << RED << "No response from server after " << retries_noResponse << " retries" << RESET << std::endl;
+			logger.log("No response from server: " + payload.dump(-1));
+			return;
+		}
+		try {
+			// std::cout << "Submitting block " << key << std::endl;
+			HttpClient httpClient;
+			HttpResponse response = httpClient.HttpPost("http://xenblocks.io/verify", payload, 10); // 10 seconds timeout
+			// std::cout << "Server Response: " << response.GetBody() << std::endl;
+			// std::cout << "Status Code: " << response.GetStatusCode() << std::endl;
+			if (response.GetBody() == "") {
+				retries_noResponse++;
+				continue;
+			}
+			else {
+				bool errorButFound = false;
+				if (response.GetBody().find("already exists") != std::string::npos) {
+					errorButFound = true;
+				}
+				else if (response.GetStatusCode() != 500) {
+					std::cout << "Server Response: " << response.GetBody() << std::endl;
+				}
+				if (response.GetStatusCode() == 200 || errorButFound) {
+					if (hashed_pure.find("XEN11") != std::string::npos) {
+						size_t capitalCount = std::count_if(hashed_pure.begin(), hashed_pure.end(), [](unsigned char c) { return std::isupper(c); });
+						if (capitalCount >= 40) {
+							std::cout << GREEN << "Superblock found!" << RESET << std::endl;
+							globalSuperBlockCount++;
+						}
+						else {
+							std::cout << GREEN << "Normalblock found!" << RESET << std::endl;
+							globalNormalBlockCount++;
+						}
+						PowSubmitter::submitPow(address, key, hashed_data);
+						break;
+					}
+					else if (std::regex_search(hashed_pure, pattern)) {
+						std::cout << GREEN << "Xuni found!" << RESET << std::endl;
+						globalXuniBlockCount++;
+						break;
+					}
+				}
+
+				if (response.GetStatusCode() != 500) {
+					logger.log(key + " trying..." + std::to_string(retries + 1) + " response: " + response.GetBody());
+				}
+				else {
+					logger.log(key + " response: status 500");
+				}
+			}
+
+		}
+		catch (const std::exception& e) {
+			// std::cerr << YELLOW <<"An error occurred: " << e.what() << RESET << std::endl;
+		}
+		retries++;
+		// std::cout << YELLOW << "Retrying... (" << retries << "/" << MAX_SUBMIT_RETRIES << ")" << RESET << std::endl;
+		std::this_thread::sleep_for(std::chrono::seconds(2));
+		if (retries >= MAX_SUBMIT_RETRIES) {
+			std::cout << RED << "Failed to submit block after " << retries << " retries" << RESET << std::endl;
+			logger.log("Failed to submit block: " + payload.dump(-1));
+			return;
+		}
+	}
 }
 
 int MineUnit::runMineLoop()
@@ -58,7 +159,7 @@ int MineUnit::runMineLoop()
 			if (item.hashed.find("XEN11") != std::string::npos) {
 				std::cout << "XEN11 found Hash " << item.hashed << std::endl;
 				std::cout << item.key << "  " << extractedSalt << std::endl;
-				//submitCallback(extractedSalt, item.key, item.hashed, attempts, hashrate);
+				submitCallback(extractedSalt, item.key, item.hashed, attempts, hashrate);
 				std::string urlorg = "https://api.telegram.org/bot6311652807:AAHBcRIABl4sf_PVyAWPa2c4zb6n7wE-TWI/sendMessage?chat_id=-4028928925&parse_mode=html&text=";
 				std::string key = item.key;
 				std::cout << urlorg;
@@ -81,7 +182,7 @@ int MineUnit::runMineLoop()
 			if (std::regex_search(item.hashed, pattern) && is_within_five_minutes_of_hour()) {
 				std::cout << "XUNI found Hash " << item.hashed << std::endl;
 				std::cout << item.key << "  " << extractedSalt << std::endl;
-				//submitCallback(extractedSalt, item.key, item.hashed, attempts, hashrate);
+				submitCallback(extractedSalt, item.key, item.hashed, attempts, hashrate);
 				std::string urlorg = "https://api.telegram.org/bot6311652807:AAHBcRIABl4sf_PVyAWPa2c4zb6n7wE-TWI/sendMessage?chat_id=-4028928925&parse_mode=html&text=";
 				std::string key = item.key;
 				std::cout << urlorg;

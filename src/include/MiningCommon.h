@@ -43,7 +43,7 @@ struct gpuInfo
 extern std::map<int, std::pair<gpuInfo, std::chrono::steady_clock::time_point>> globalGpuInfos;
 extern std::mutex globalGpuInfosMutex;
 
-using SubmitCallback = std::function<void(const std::string& hexsalt, const std::string& key, const std::string& hashed_pure, const size_t attempts, const float hashrate)>;
+//using SubmitCallback = std::function<void(const std::string& hexsalt, const std::string& key, const std::string& hashed_pure, const size_t attempts, const float hashrate)>;
 using StatCallback = std::function<void(const gpuInfo gpuinfo)>;
 
 
